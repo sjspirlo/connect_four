@@ -1,6 +1,6 @@
 import numpy as np
 from dataclasses import dataclass, field
-from constants import BoardProperties
+from src.game.constants import BoardProperties
 from typing import TypeAlias
 from numpy.typing import NDArray
 
@@ -130,3 +130,9 @@ class ConnectFourGame:
             return None
 
         self.whose_turn = int(self.whose_turn*-1)
+
+    def print_board(self) -> None:
+        symbols = {0: '.', 1: 'X', -1: 'O'}
+        for row in range(BoardProperties.N_ROWS):
+            print(' '.join(symbols[cell] for cell in self.board_state.state[row]))
+        print(' '.join(str(col) for col in range(BoardProperties.N_COLS)))
