@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-
 @dataclass
 class BoardProperties:
     N_ROWS: int = 6
