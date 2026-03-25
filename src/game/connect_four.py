@@ -1,16 +1,15 @@
 import numpy as np
 from dataclasses import dataclass, field
-from src.game.constants import BoardProperties
+from src.game.game_constants import BoardProperties
 from typing import TypeAlias
 from numpy.typing import NDArray
+from src.utils import FloatArray, IntArray
 
-FloatArray: TypeAlias = NDArray[np.float64]
-IntArray: TypeAlias = NDArray[np.int8]
-
+BOARD_PROPERTIES = BoardProperties()
 
 @dataclass
 class BoardState:
-    state: IntArray
+    state: IntArray # N_ROWS x N_COLS array of -1, 0, 1 values representing the board.
 
     def __post_init__(self):
         assert self.state.shape == (6, 7), 'State array has incorrect shape'
@@ -19,32 +18,32 @@ class BoardState:
     @classmethod
     def as_new_board(cls) -> 'BoardState':
         return BoardState(
-            state = np.zeros((BoardProperties.N_ROWS, BoardProperties.N_COLS), dtype = np.int8)
+            state = np.zeros((BOARD_PROPERTIES.N_ROWS, BOARD_PROPERTIES.N_COLS), dtype = np.int8)
         )
 
     @property
     def board_is_full(
         self
     ) -> bool:
-        return np.count_nonzero(self.state) == BoardProperties.N_FIELDS
+        return np.count_nonzero(self.state) == BOARD_PROPERTIES.N_FIELDS
     
     def col_is_full(
         self,
         col: int
     ) -> bool:
-        return np.count_nonzero(self.state[:, col]) == BoardProperties.N_ROWS
+        return np.count_nonzero(self.state[:, col]) == BOARD_PROPERTIES.N_ROWS
     
     def get_legal_moves(
         self
     ) -> IntArray:
-        legal_moves = [int(col) for col in range(BoardProperties.N_COLS) if not self.col_is_full(col=col)]
+        legal_moves = [int(col) for col in range(BOARD_PROPERTIES.N_COLS) if not self.col_is_full(col=col)]
         return np.array(legal_moves, dtype=np.int8)
     
     def get_next_row(
         self,
         col: int
     ) -> int:
-        return int(BoardProperties.N_ROWS - 1 - np.sum(self.state[:, col] != 0))
+        return int(BOARD_PROPERTIES.N_ROWS - 1 - np.sum(self.state[:, col] != 0))
 
 @dataclass
 class ConnectFourGame:
@@ -55,6 +54,14 @@ class ConnectFourGame:
 
     def __post_init__(self):
         assert self.whose_turn in [1, -1]
+
+    def copy(self) -> 'ConnectFourGame':
+        return ConnectFourGame(
+            board_state=BoardState(state=self.board_state.state.copy()),
+            whose_turn=self.whose_turn,
+            result=self.result,
+            verbose=False
+        )
     
     @classmethod
     def as_new_game(
@@ -94,7 +101,7 @@ class ConnectFourGame:
                 while True:
                     r = row + sign * step * dr
                     c = col + sign * step * dc
-                    if not (0 <= r < BoardProperties.N_ROWS and 0 <= c < BoardProperties.N_COLS):
+                    if not (0 <= r < BOARD_PROPERTIES.N_ROWS and 0 <= c < BOARD_PROPERTIES.N_COLS):
                         break
                     if self.board_state.state[r, c] != player:
                         break
@@ -113,7 +120,7 @@ class ConnectFourGame:
             raise ValueError('Game is already over')
         
         if not self.is_legal(move = move):
-            if self.verbose: print(f'Provided move: {move} is not legal.')
+            if self.verbose: print(f'Provided move ({move}) is not legal, no move made.')
             return None
 
         next_row = self.board_state.get_next_row(col = move)
@@ -133,6 +140,6 @@ class ConnectFourGame:
 
     def print_board(self) -> None:
         symbols = {0: '.', 1: 'X', -1: 'O'}
-        for row in range(BoardProperties.N_ROWS):
+        for row in range(BOARD_PROPERTIES.N_ROWS):
             print(' '.join(symbols[cell] for cell in self.board_state.state[row]))
-        print(' '.join(str(col) for col in range(BoardProperties.N_COLS)))
+        print(' '.join(str(col) for col in range(BOARD_PROPERTIES.N_COLS)))
