@@ -22,28 +22,28 @@ class BoardState:
         )
 
     @property
-    def board_is_full(
-        self
-    ) -> bool:
-        return np.count_nonzero(self.state) == BOARD_PROPERTIES.N_FIELDS
+    def board_is_full(self) -> bool:
+        return all(self.state[0, col] != 0 for col in range(BoardProperties.N_COLS))
     
     def col_is_full(
-        self,
+        self, 
         col: int
     ) -> bool:
-        return np.count_nonzero(self.state[:, col]) == BOARD_PROPERTIES.N_ROWS
+        # Check if top row is occupied
+        return self.state[0, col] != 0 
     
     def get_legal_moves(
         self
-    ) -> IntArray:
-        legal_moves = [int(col) for col in range(BOARD_PROPERTIES.N_COLS) if not self.col_is_full(col=col)]
-        return np.array(legal_moves, dtype=np.int8)
+    ) -> list[int]:
+        return [col for col in range(BoardProperties.N_COLS) if self.state[0, col] == 0]
     
     def get_next_row(
         self,
         col: int
     ) -> int:
-        return int(BOARD_PROPERTIES.N_ROWS - 1 - np.sum(self.state[:, col] != 0))
+        for row in range(BoardProperties.N_ROWS - 1, -1, -1):
+            if self.state[row, col] == 0:
+                return row
 
 @dataclass
 class ConnectFourGame:
@@ -111,17 +111,13 @@ class ConnectFourGame:
                 return True
         return False
 
-    def make_move(
-        self, 
-        move: int
-    ) -> None:
+    def make_move(self, move: int, check_legal: bool = True) -> None:
+        if check_legal and not self.is_legal(move=move):
+            print(f'Provided move ({move}) is not legal, no move made.')
+            return None
 
         if self.result is not None:
             raise ValueError('Game is already over')
-        
-        if not self.is_legal(move = move):
-            if self.verbose: print(f'Provided move ({move}) is not legal, no move made.')
-            return None
 
         next_row = self.board_state.get_next_row(col = move)
         self.board_state.state[next_row, move] = self.whose_turn

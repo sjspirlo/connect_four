@@ -58,13 +58,19 @@ class MCTS:
             result=result
         )
     
-    def _select(
-        self,
-        starting_node: Node
-    ) -> Node:
-        assert not starting_node.untried_actions, 'Non fully-expanded node encountered in _select method'
-        ucb1_scores = np.array([self._UCB1_score(node = n) for n in starting_node.children])
-        return starting_node.children[np.argmax(ucb1_scores)]
+    # def _select(
+    #     self,
+    #     starting_node: Node
+    # ) -> Node:
+    #     assert not starting_node.untried_actions, 'Non fully-expanded node encountered in _select method'
+    #     ucb1_scores = np.array([self._UCB1_score(node = n) for n in starting_node.children])
+    #     return starting_node.children[np.argmax(ucb1_scores)]
+
+    def _select(self, starting_node: Node) -> Node:
+        visits = np.array([c.n_visits for c in starting_node.children], dtype=np.float64)
+        wins = np.array([c.n_wins for c in starting_node.children], dtype=np.float64)
+        scores = wins / visits + self.ucb1_exploration_param * np.sqrt(np.log(starting_node.n_visits) / visits)
+        return starting_node.children[np.argmax(scores)]
 
     def _selection(
         self
@@ -78,8 +84,8 @@ class MCTS:
             path.append(next_node)
             last_node = next_node   
         
-        print(f'Selection stopped at depth {len(path)-1}, \
-              untried: {len(last_node.untried_actions)}, children: {len(last_node.children)}, terminal: {last_node.game.result is not None}')
+        # print(f'Selection stopped at depth {len(path)-1}, \
+        #       untried: {len(last_node.untried_actions)}, children: {len(last_node.children)}, terminal: {last_node.game.result is not None}')
         return path
 
     def _expansion(
@@ -106,7 +112,7 @@ class MCTS:
             legal_moves = rollout_game.board_state.get_legal_moves()
             assert len(legal_moves) > 0, f'No legal moves but result is {rollout_game.result}\nBoard:\n{rollout_game.board_state.state}'
             random_move = self.rng.choice(legal_moves)
-            _ = rollout_game.make_move(move = random_move)
+            _ = rollout_game.make_move(move = random_move, check_legal=False)
         
         return rollout_game.result
 
