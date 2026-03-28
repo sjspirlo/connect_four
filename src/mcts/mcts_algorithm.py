@@ -118,13 +118,25 @@ class MCTS:
 
     def _backpropagation(
         self, 
-        result: int,
+        result: int, 
         path: list[Node]
     ) -> None:
         for node in path:
             node.n_visits += 1
-            if result == node.game.whose_turn:
-                node.n_wins += 1
+            if result == 0:
+                node.n_wins += 0.5
+            elif node.parent is None:
+                # Root: credit win to the player about to move
+                if result == node.game.whose_turn:
+                    node.n_wins += 1
+            elif node.game.result is not None:
+                # Terminal: whose_turn was never flipped, so whose_turn = winner
+                if result == node.game.whose_turn:
+                    node.n_wins += 1
+            else:
+                # Non-terminal: player who moved into this node = whose_turn * -1
+                if result == node.game.whose_turn * -1:
+                    node.n_wins += 1
 
     def run(self, n_iters: int) -> Action:
         for _ in range(n_iters):

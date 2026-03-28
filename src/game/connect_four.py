@@ -112,6 +112,7 @@ class ConnectFourGame:
         return False
 
     def make_move(self, move: int, check_legal: bool = True) -> None:
+
         if check_legal and not self.is_legal(move=move):
             print(f'Provided move ({move}) is not legal, no move made.')
             return None
@@ -131,8 +132,9 @@ class ConnectFourGame:
             if self.verbose: print('GAME OVER - Board is full; no winner.')
             self.result = 0
             return None
-
+        
         self.whose_turn = int(self.whose_turn*-1)
+        
 
     def print_board(self) -> None:
         symbols = {0: '.', 1: 'X', -1: 'O'}
